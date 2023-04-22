@@ -1,58 +1,78 @@
 import cv2
-import numpy as np
-# initialize video capture from default camera
+import dlib
+import math
+# Load face detector and landmark predictor
+detector = dlib.get_frontal_face_detector()
+predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+# Load arrow image
+arrow_image = cv2.imread("arrow.png", cv2.IMREAD_UNCHANGED)
+# Define arrow scaling factor and length in pixels
+arrow_scale = 0.3
+arrow_length = 100
+# Define arrow color and thickness
+arrow_color = (255, 0, 0)
+arrow_thickness = 2
+# Define video capture device
 cap = cv2.VideoCapture(0)
-# initialize face and eye detectors
-face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
-# initialize parameters for optical flow
-lk_params = dict(winSize=(15, 15),
-                 maxLevel=4,
-                 criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
-# initialize variables for tracking optical flow
-old_gray = None
-old_pts = None
 while True:
-    # capture frame-by-frame
+    # Capture frame from video stream
     ret, frame = cap.read()
-    # convert frame to grayscale
+    # Convert frame to grayscale
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    # detect faces in the grayscale frame
-    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-    # loop over all detected faces
-    for (x, y, w, h) in faces:
-        # extract the face region
-        roi_gray = gray[y:y + h, x:x + w]
-        roi_color = frame[y:y + h, x:x + w]
-        # detect eyes in the face region
-        eyes = eye_cascade.detectMultiScale(roi_gray)
-        # loop over all detected eyes
-        for (ex, ey, ew, eh) in eyes:
-            # extract the eye region
-            eye_gray = roi_gray[ey:ey + eh, ex:ex + ew]
-            eye_color = roi_color[ey:ey + eh, ex:ex + ew]
-            # initialize optical flow if this is the first time we're seeing this eye
-            if old_gray is None:
-                old_gray = eye_gray
-                old_pts = cv2.goodFeaturesToTrack(old_gray, maxCorners=100, qualityLevel=0.3, minDistance=7, mask=None, **lk_params)
-            # calculate optical flow between previous and current eye frames
-            new_pts, status, err = cv2.calcOpticalFlowPyrLK(old_gray, eye_gray, old_pts, None, **lk_params)
-            # filter out points with bad status
-            good_new = new_pts[status == 1]
-            good_old = old_pts[status == 1]
-            # compute the average movement of the eye in pixels
-            dx = np.mean(good_new[:, 0, 0] - good_old[:, 0, 0])
-            dy = np.mean(good_new[:, 0, 1] - good_old[:, 0, 1])
-            # update the old points with the new points for the next frame
-            old_gray = eye_gray.copy()
-            old_pts = good_new.reshape(-1, 1, 2)
-            # draw a line to visualize the direction of eye movement
-            cv2.line(eye_color, (int(ew / 2), int(eh / 2)), (int(ew / 2 + dx), int(eh / 2 + dy)), (0, 255, 0), 2)
-    # display the resulting frame
-    cv2.imshow('frame', frame)
-    # exit if the user presses 'q'
+    # Detect faces in grayscale frame
+    faces = detector(gray)
+    # For each detected face, find facial landmarks and estimate gaze direction
+    for face in faces:
+        # Find facial landmarks
+        landmarks = predictor(gray, face)
+        # Extract eye landmarks
+        left_eye = [(landmarks.part(36).x, landmarks.part(36).y),
+                    (landmarks.part(37).x, landmarks.part(37).y),
+                    (landmarks.part(38).x, landmarks.part(38).y),
+                    (landmarks.part(39).x, landmarks.part(39).y),
+                    (landmarks.part(40).x, landmarks.part(40).y),
+                    (landmarks.part(41).x, landmarks.part(41).y)]
+        right_eye = [(landmarks.part(42).x, landmarks.part(42).y),
+                     (landmarks.part(43).x, landmarks.part(43).y),
+                     (landmarks.part(44).x, landmarks.part(44).y),
+                     (landmarks.part(45).x, landmarks.part(45).y),
+                     (landmarks.part(46).x, landmarks.part(46).y),
+                     (landmarks.part(47).x, landmarks.part(47).y)]
+        # Compute center of left and right eyes
+        left_eye_center = (int(sum([pt[0] for pt in left_eye]) / 6),
+                           int(sum([pt[1] for pt in left_eye]) / 6))
+        right_eye_center = (int(sum([pt[0] for pt in right_eye]) / 6),
+                            int(sum([pt[1] for pt in right_eye]) / 6))
+        # Compute angle between eyes
+        dx = right_eye_center[0] - left_eye_center[0]
+        dy = right_eye_center[1] - left_eye_center[1]
+        angle = math.atan2(dy, dx) * 180 / math.pi
+        # Compute endpoint of arrow
+        arrow_endpoint = (int(right_eye_center[0] + arrow_length * math.cos(angle)),
+                          int(right_eye_center[1] + arrow_length * math.sin(angle)))
+        # Resize arrow
+        arrow_resized = cv2.resize(arrow_image, None, fx=arrow_scale, fy=arrow_scale)
+        # Rotate arrow
+        rows, cols, _ = arrow_resized.shape
+        M = cv2.getRotationMatrix2D((cols / 2, rows / 2), -angle, 1)
+        arrow_rotated = cv2.warpAffine(arrow_resized, M, (cols, rows))
+        # Draw arrow on frame
+        cv2.arrowedLine(frame, right_eye_center, arrow_endpoint, arrow_color, arrow_thickness)
+        overlay = arrow_rotated[:, :, :3]
+        mask = arrow_rotated[:, :, 3]
+        mask_inv = cv2.bitwise_not(mask)
+        roi = frame[right_eye_center[1] - rows // 2:right_eye_center[1] + rows // 2,
+                    right_eye_center[0] - cols // 2:right_eye_center[0] + cols // 2]
+        bg = cv2.bitwise_and(roi, roi, mask=mask_inv)
+        fg = cv2.bitwise_and(overlay, overlay, mask=mask)
+        dst = cv2.add(bg, fg)
+        frame[right_eye_center[1] - rows // 2:right_eye_center[1] + rows // 2, right_eye_center[0] - cols // 2:right_eye_center[0] + cols // 2] = dst
+    # Display frame
+    cv2.imshow("Frame", frame)
+    # Exit if the user presses the 'q' key
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
-# release the video capture and close all windows
+
+# Release the camera and close the window
 cap.release()
 cv2.destroyAllWindows()
