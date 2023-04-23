@@ -1,10 +1,11 @@
 import os
 import cv2
 import numpy as np
-import tensorflow as tf
-import keras
+# import tensorflow as tf
+# import keras
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
+
 # Define the paths to the dataset and the output model
 DATASET_PATH = '../Data/eyedb/mrlEyes_2018_01'
 OUTPUT_MODEL_PATH = './eye_detection_model.h5'
@@ -28,26 +29,30 @@ model = Sequential([
 model.compile(loss='binary_crossentropy',
               optimizer='adam',
               metrics=['accuracy'])
+
+
 # Preprocess the dataset
 def preprocess_dataset(dataset_path):
     print("Starting Preprocessing")
-    images = []
-    labels = []
+    eye_images = []
+    eye_labels = []
     for folder_name in os.listdir(dataset_path):
         print("Processing folder:" + str(folder_name))
         folder_path = os.path.join(dataset_path, folder_name)
         for file_name in os.listdir(folder_path):
-            #print("Processing file:" + str(file_name))
+            # print("Processing file:" + str(file_name))
             file_path = os.path.join(folder_path, file_name)
             image = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
             image = cv2.resize(image, IMAGE_SIZE)
             image = image / 255.0
-            images.append(image)
-            labels.append(int(file_name[16:17]))
-            #print(int(file_name[16:17]))
-    images = np.array(images).reshape((-1, IMAGE_SIZE[0], IMAGE_SIZE[1], 1))
-    labels = np.array(labels)
-    return images, labels
+            eye_images.append(image)
+            eye_labels.append(int(file_name[16:17]))
+            # print(int(file_name[16:17]))
+    eye_images = np.array(eye_images).reshape((-1, IMAGE_SIZE[0], IMAGE_SIZE[1], 1))
+    eye_labels = np.array(eye_labels)
+    return eye_images, eye_labels
+
+
 images, labels = preprocess_dataset(DATASET_PATH)
 print("Finished Preprocessing")
 
