@@ -7,7 +7,7 @@ from PIL import Image, ImageTk
 
 # Initialize face detector and landmark predictor
 detector = dlib.get_frontal_face_detector()
-predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+predictor = dlib.shape_predictor("../Data/shape_predictor_68_face_landmarks.dat")
 
 # Define eye aspect ratio (EAR) threshold and number of consecutive frames to detect
 EAR_THRESHOLD = 0.2

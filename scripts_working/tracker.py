@@ -3,9 +3,9 @@ import dlib
 import math
 # Load face detector and landmark predictor
 detector = dlib.get_frontal_face_detector()
-predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+predictor = dlib.shape_predictor("../Data/shape_predictor_68_face_landmarks.dat")
 # Load arrow image
-arrow_image = cv2.imread("arrow.png", cv2.IMREAD_UNCHANGED)
+arrow_image = cv2.imread("../Data/arrow.png", cv2.IMREAD_UNCHANGED)
 # Define arrow scaling factor and length in pixels
 arrow_scale = 0.3
 arrow_length = 100

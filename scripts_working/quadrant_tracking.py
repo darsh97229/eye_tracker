@@ -1,7 +1,7 @@
 import cv2
 # Initialize the face and eye detectors
-face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
+face_cascade = cv2.CascadeClassifier('../Data/haarcascade_frontalface_default.xml')
+eye_cascade = cv2.CascadeClassifier('../Data/haarcascade_eye.xml')
 # Define the screen quadrants
 width, height = 640, 480
 quadrants = {

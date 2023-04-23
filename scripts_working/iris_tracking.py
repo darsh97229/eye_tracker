@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 # Define the eye detector and load the pre-trained Haar cascade classifier
-eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
+eye_cascade = cv2.CascadeClassifier('../Data/haarcascade_eye.xml')
 # Create a window to display the video stream
 cv2.namedWindow('Eye Tracking')
 # Capture a video stream from the default camera
