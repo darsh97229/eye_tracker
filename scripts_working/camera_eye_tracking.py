@@ -1,8 +1,8 @@
 import cv2
 
 # Load the classifier for the face and eye detection
-face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
+face_cascade = cv2.CascadeClassifier('../Data/haarcascade_frontalface_default.xml')
+eye_cascade = cv2.CascadeClassifier('../Data/haarcascade_eye.xml')
 
 # Initialize the camera
 cap = cv2.VideoCapture(0)
