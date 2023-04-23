@@ -2,9 +2,9 @@ import cv2
 # Initialize the webcam
 cap = cv2.VideoCapture(0)
 # Create a face detector
-face_cascade = cv2.CascadeClassifier('Data/haarcascade_frontalface_default.xml')
+face_cascade = cv2.CascadeClassifier('../Data/haarcascade_frontalface_default.xml')
 # Create an eye detector
-eye_cascade = cv2.CascadeClassifier('Data/haarcascade_eye.xml')
+eye_cascade = cv2.CascadeClassifier('../Data/haarcascade_eye.xml')
 # Initialize the mean-shift tracker
 tracking_window = None
 while True:

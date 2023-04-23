@@ -18,8 +18,9 @@ while True:
     input_data = np.expand_dims(normalized, axis=0)
     # Use the eye detection model to make a prediction on the input image
     prediction = model.predict(input_data)
+    prediction2 = model.predict(input_data)
     # Extract the predicted eye location from the output of the model
-    eye_x, eye_y = prediction[0]
+    eye_x, eye_y = prediction[0], prediction2[0]
     # Draw a circle around the predicted eye location on the original frame
     cv2.circle(frame, (int(eye_x * frame.shape[1]), int(eye_y * frame.shape[0])), 10, (0, 0, 255), -1)
     # Display the resulting frame
